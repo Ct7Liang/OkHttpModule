@@ -9,8 +9,8 @@ import android.util.Log;
 class LogUtils {
 
     static void write(String string){
-        if (COkHttpUtils.isShowLog){
-            Log.i(COkHttpUtils.SHOW_TAG, string);
+        if (OkHttpHelper.isShowLog){
+            Log.i(OkHttpHelper.SHOW_TAG, string);
         }
     }
 }
