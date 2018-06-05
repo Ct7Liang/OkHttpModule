@@ -8,6 +8,7 @@ import android.os.Message;
 import android.support.annotation.NonNull;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
@@ -28,8 +29,8 @@ public class OkHttpHelper {
     private static String cookieName = "cookie";
     private static OkHttpClient okHttpClient;
     private static SharedPreferences sp;
-    public static boolean isShowLog = true;
-    public static String SHOW_TAG = "ct7";
+    static boolean isShowLog = true;
+    static String SHOW_TAG = "ct7";
 
     /**
      * 初始化方法1, 创建OkHttpClient,避免重复创建, 创建sp文件
@@ -38,7 +39,7 @@ public class OkHttpHelper {
         isShowLog = showLog;
         SHOW_TAG = logTag;
         if (okHttpClient == null){
-            okHttpClient = new OkHttpClient();
+            okHttpClient = new OkHttpClient.Builder().connectTimeout(30, TimeUnit.SECONDS).build();
         }
         sp = context.getSharedPreferences("sessionID", Context.MODE_PRIVATE);
     }
@@ -51,7 +52,7 @@ public class OkHttpHelper {
         isShowLog = showLog;
         SHOW_TAG = logTag;
         if (okHttpClient == null){
-            okHttpClient = new OkHttpClient();
+            okHttpClient = new OkHttpClient.Builder().connectTimeout(30, TimeUnit.SECONDS).build();
         }
         sp = context.getSharedPreferences("sessionID", Context.MODE_PRIVATE);
     }
@@ -161,6 +162,7 @@ public class OkHttpHelper {
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 Message msg = Message.obtain();
                 Bundle b = new Bundle();
+                LogUtils.write("访问异常: " + e.toString());
                 b.putSerializable("exception", e);
                 msg.what = 0;
                 msg.setData(b);
@@ -177,6 +179,7 @@ public class OkHttpHelper {
                 ResponseBody body = response.body();
                 if (body != null){
                     String string = body.string();
+                    LogUtils.write("访问成功: " + string);
                     Message msg = Message.obtain();
                     Bundle b = new Bundle();
                     b.putCharSequence("data", string);
@@ -189,12 +192,21 @@ public class OkHttpHelper {
         return this;
     }
 
+    public static void onDestroy(OkHttpHelper ... okHttpHelper) {
+        for (OkHttpHelper okHttpHelper1 : okHttpHelper) {
+            if (okHttpHelper1 != null) {
+                okHttpHelper1.cancel();
+            }
+        }
+    }
+
     /**
      * 取消请求
      */
-    public void cancel(){
+    private void cancel(){
         if (call.isExecuted() && !call.isCanceled()){
             call.cancel();
+            LogUtils.write(desc + ": 请求已被取消");
         }
     }
 
@@ -258,7 +270,8 @@ public class OkHttpHelper {
             if (onResponse!=null){
                 switch (msg.what){
                     case 0:
-                        onResponse.onError((Exception) msg.getData().getParcelable("exception"));
+                        Exception exception = (Exception) msg.getData().getSerializable("exception");
+                        onResponse.onError(exception);
                         break;
                     case 1:
                         onResponse.onSuccess((String) msg.getData().getCharSequence("data"));
