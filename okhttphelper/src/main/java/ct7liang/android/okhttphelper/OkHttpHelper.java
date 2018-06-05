@@ -30,12 +30,12 @@ public class OkHttpHelper {
     private static OkHttpClient okHttpClient;
     private static SharedPreferences sp;
     static boolean isShowLog = true;
-    static String SHOW_TAG = "ct7";
+    static String SHOW_TAG;
 
     /**
      * 初始化方法1, 创建OkHttpClient,避免重复创建, 创建sp文件
      */
-    public static void init(Context context, String logTag, boolean showLog){
+    public static void init(Context context, @NonNull String logTag, boolean showLog){
         isShowLog = showLog;
         SHOW_TAG = logTag;
         if (okHttpClient == null){
@@ -47,7 +47,7 @@ public class OkHttpHelper {
     /**
      * 初始化方法2, 创建OkHttpClient,避免重复创建, 创建sp文件, 设置cookie的键名
      */
-    public static void init(Context context, String cookieKeyName, String logTag, boolean showLog){
+    public static void init(Context context, @NonNull String cookieKeyName, @NonNull String logTag, boolean showLog){
         cookieName = cookieKeyName;
         isShowLog = showLog;
         SHOW_TAG = logTag;
@@ -239,18 +239,21 @@ public class OkHttpHelper {
      */
     private Headers getHeaders(){
         Headers.Builder builder = new Headers.Builder();
+        StringBuilder sb = new StringBuilder();
         if (headers!=null){
             HeaderBean headerBean;
             for (int i = 0; i < headers.size(); i++) {
                 headerBean = headers.get(i);
                 builder.add(headerBean.key, headerBean.value);
+                sb.append(" - ").append(headerBean.key).append(" : ").append(headerBean.value);
             }
         }
         String sessionId = sp.getString("sessionId", "");
         if (!sessionId.equals("")){
             builder.add(cookieName, sessionId);
-            LogUtils.write("携带sessionID: " + sessionId);
+            sb.append(" - ").append(cookieName).append(" : ").append(sessionId);
         }
+        LogUtils.write("请求头参数: " + sb);
         return builder.build();
     }
 
