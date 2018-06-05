@@ -1,15 +1,16 @@
+#### OkHttpHelper
+
 ```
-    OkHttpHelper
 
     allprojects {
-		repositories {
-			...
-			maven { url 'https://jitpack.io' }
-		}
-	}
+        repositories {
+            ...
+            maven { url 'https://jitpack.io' }
+        }
+    }
 
-	dependencies {
+    dependencies {
         compile 'com.github.Ct7Liang:OkHttpModule:1.0.0'
-	}
+    }
 
 ```
