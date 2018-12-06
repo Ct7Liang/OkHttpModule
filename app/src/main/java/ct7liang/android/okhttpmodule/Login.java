@@ -8,10 +8,12 @@ import ct7liang.android.okhttphelper.OkHttpHelper;
  */
 public class Login {
     public static OkHttpHelper login(final OnLogin onLogin){
-        return OkHttpHelper
+        return OkHttpHelper.create()
                 .post().desc("登录").url("http://bbs.52bqu.com/biz/loginc/login")
                 .param("account", "18736607332")
                 .param("password", "123456")
+                .header("header_param1", "value1")
+                .header("header_param2", "value2")
                 .execute(new OkHttpHelper.OnResponse() {
                     @Override
                     public void onSuccess(String s) {

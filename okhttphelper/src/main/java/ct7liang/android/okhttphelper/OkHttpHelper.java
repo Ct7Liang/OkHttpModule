@@ -6,9 +6,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
+import android.util.Log;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
+
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
@@ -27,17 +30,18 @@ import okhttp3.ResponseBody;
 public class OkHttpHelper {
 
     private static String cookieName = "cookie";
+    private static String SHOW_TAG = "okHttpHelper";
+    private static boolean isShowLog = true;
     private static OkHttpClient okHttpClient;
     private static SharedPreferences sp;
-    static boolean isShowLog = true;
-    static String SHOW_TAG;
+
+    private OkHttpHelper(){}
 
     /**
-     * 初始化方法1, 创建OkHttpClient,避免重复创建, 创建sp文件
+     * 初始化okHttpClient和SharedPreferences
+     * @param context Context
      */
-    public static void init(Context context, @NonNull String logTag, boolean showLog){
-        isShowLog = showLog;
-        SHOW_TAG = logTag;
+    public static void init(Context context){
         if (okHttpClient == null){
             okHttpClient = new OkHttpClient.Builder().connectTimeout(30, TimeUnit.SECONDS).build();
         }
@@ -45,16 +49,27 @@ public class OkHttpHelper {
     }
 
     /**
-     * 初始化方法2, 创建OkHttpClient,避免重复创建, 创建sp文件, 设置cookie的键名
+     * 设置是否输出网络请求日志,默认为true
+     * @param isShow boolean
      */
-    public static void init(Context context, @NonNull String cookieKeyName, @NonNull String logTag, boolean showLog){
-        cookieName = cookieKeyName;
-        isShowLog = showLog;
-        SHOW_TAG = logTag;
-        if (okHttpClient == null){
-            okHttpClient = new OkHttpClient.Builder().connectTimeout(30, TimeUnit.SECONDS).build();
-        }
-        sp = context.getSharedPreferences("sessionID", Context.MODE_PRIVATE);
+    public static void setShowLogEnable(boolean isShow){
+        isShowLog = isShow;
+    }
+
+    /**
+     * 设置日志标签,默认为"okHttpHelper"
+     * @param tag String
+     */
+    public static void setLogTag(String tag){
+        SHOW_TAG = tag;
+    }
+
+    /**
+     * 设置session在请求头里面的键名,默认为"cookie"
+     * @param sessionName String
+     */
+    public static void setSessionName(String sessionName){
+        cookieName = sessionName;
     }
 
     //标记: 是否为POST方法
@@ -65,11 +80,11 @@ public class OkHttpHelper {
     private String desc;
 
     //post提交格式
-    private static int POST_TYPE;
+    private int POST_TYPE;
     private static final int POST_STR = 0;
     private static final int POST_NONE = 1;
 
-    private static String post_string;
+    private String post_string;
 
     //参数集
     private ArrayList<ParamBean> params;
@@ -78,34 +93,33 @@ public class OkHttpHelper {
     //发起请求方
     private Call call;
 
-    public static OkHttpHelper post(){
+    /**
+     * 创建OkHttpHelper对象
+     * @return okHttpHelper
+     */
+    public static OkHttpHelper create(){
         if (okHttpClient==null){
-            throw new NullPointerException("Ct7OkHttp没有初始化: new OkHttpHelper().init()");
+            throw new NullPointerException("OkHttpHelper没有初始化: OkHttpHelper.init()");
         }
+        return new OkHttpHelper();
+    }
+
+    public OkHttpHelper post(){
         POST_TYPE = POST_NONE;
-        OkHttpHelper cOkHttpUtils = new OkHttpHelper();
-        cOkHttpUtils.isPost = true;
-        return cOkHttpUtils;
+        this.isPost = true;
+        return this;
     }
 
-    public static OkHttpHelper post(@NonNull String data){
-        if (okHttpClient==null){
-            throw new NullPointerException("Ct7OkHttp没有初始化: new OkHttpHelper().init()");
-        }
+    public OkHttpHelper post(@NonNull String data){
         POST_TYPE = POST_STR;
-        post_string = data;
-        OkHttpHelper cOkHttpUtils = new OkHttpHelper();
-        cOkHttpUtils.isPost = true;
-        return cOkHttpUtils;
+        this.post_string = data;
+        this.isPost = true;
+        return this;
     }
 
-    public static OkHttpHelper get(){
-        if (okHttpClient==null){
-            throw new NullPointerException("Ct7OkHttp没有初始化: new OkHttpHelper().init()");
-        }
-        OkHttpHelper cOkHttpUtils = new OkHttpHelper();
-        cOkHttpUtils.isPost = false;
-        return cOkHttpUtils;
+    public OkHttpHelper get(){
+        this.isPost = false;
+        return this;
     }
 
     public OkHttpHelper desc(String desc){
@@ -135,7 +149,7 @@ public class OkHttpHelper {
     }
 
     public OkHttpHelper execute(final OnResponse onResponse){
-        LogUtils.write(desc==null?"------------------------":"--------- " + desc + " ---------");
+        write(desc==null?"***************************************":"****************** " + desc + " ******************");
         this.onResponse = onResponse;
         Request request;
         if (isPost) {
@@ -143,7 +157,7 @@ public class OkHttpHelper {
             switch (POST_TYPE){
                 case POST_STR:
                     post = new Request.Builder().post(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), post_string));
-                    LogUtils.write("参数: " + post_string);
+                    write("请求提交参数: " + post_string);
                     break;
                 case POST_NONE:
                 default:
@@ -151,10 +165,10 @@ public class OkHttpHelper {
                     break;
             }
             request = post.url(url).headers(getHeaders()).tag(this).build();
-            LogUtils.write("访问路径: " + url);
+            write("访问路径(POST): " + url);
         }else{
             request = new Request.Builder().get().headers(getHeaders()).url(url).tag(this).build();
-            LogUtils.write("访问路径: " + url);
+            write("访问路径(GET): " + url);
         }
         call = okHttpClient.newCall(request);
         call.enqueue(new Callback() {
@@ -162,7 +176,7 @@ public class OkHttpHelper {
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 Message msg = Message.obtain();
                 Bundle b = new Bundle();
-                LogUtils.write("访问异常: " + e.toString());
+                write("访问异常: " + e.toString());
                 b.putSerializable("exception", e);
                 msg.what = 0;
                 msg.setData(b);
@@ -173,13 +187,13 @@ public class OkHttpHelper {
                 String headers = response.header("Set-Cookie");
                 if (headers!=null && headers.startsWith("JSESSIONID=")){
                     String substring = headers.substring(0, headers.indexOf(';'));
-                    LogUtils.write("获取到SessionID: " + substring);
+                    write("获取到SessionID: " + substring);
                     sp.edit().putString("sessionId", substring).apply();
                 }
                 ResponseBody body = response.body();
                 if (body != null){
                     String string = body.string();
-                    LogUtils.write("访问成功: " + string);
+                    write("访问成功: " + string);
                     Message msg = Message.obtain();
                     Bundle b = new Bundle();
                     b.putCharSequence("data", string);
@@ -204,10 +218,14 @@ public class OkHttpHelper {
      * 取消请求
      */
     private void cancel(){
-        if (call.isExecuted() && !call.isCanceled()){
+        if (call!=null){
             call.cancel();
-            LogUtils.write(desc + ": 请求已被取消");
         }
+        if (handler!=null){
+            handler.removeCallbacksAndMessages(null);
+            handler = null;
+        }
+        write(desc + "请求: 已关闭");
     }
 
     /**
@@ -229,8 +247,8 @@ public class OkHttpHelper {
                     sb.append("=").append(paramBean.value);
                 }
             }
-            LogUtils.write("参数: " + sb);
         }
+        write("请求参数: " + sb);
         return builder.build();
     }
 
@@ -245,15 +263,15 @@ public class OkHttpHelper {
             for (int i = 0; i < headers.size(); i++) {
                 headerBean = headers.get(i);
                 builder.add(headerBean.key, headerBean.value);
-                sb.append(" - ").append(headerBean.key).append(" : ").append(headerBean.value);
+                sb.append(headerBean.key).append(" = ").append(headerBean.value).append("\n");
             }
         }
         String sessionId = sp.getString("sessionId", "");
         if (!sessionId.equals("")){
             builder.add(cookieName, sessionId);
-            sb.append(" - ").append(cookieName).append(" : ").append(sessionId);
+            sb.append(cookieName).append(" = ").append(sessionId);
         }
-        LogUtils.write("请求头参数: " + sb);
+        write("请求头参数: \n" + sb);
         return builder.build();
     }
 
@@ -273,15 +291,23 @@ public class OkHttpHelper {
             if (onResponse!=null){
                 switch (msg.what){
                     case 0:
+                        onDestroy(OkHttpHelper.this);
                         Exception exception = (Exception) msg.getData().getSerializable("exception");
                         onResponse.onError(exception);
                         break;
                     case 1:
+                        onDestroy(OkHttpHelper.this);
                         onResponse.onSuccess((String) msg.getData().getCharSequence("data"));
                         break;
                 }
             }
         }
     };
+
+    private void write(String string){
+        if (isShowLog){
+            Log.i(SHOW_TAG, string);
+        }
+    }
 
 }

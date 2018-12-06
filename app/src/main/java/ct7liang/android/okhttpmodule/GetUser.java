@@ -8,7 +8,7 @@ import ct7liang.android.okhttphelper.OkHttpHelper;
  */
 public class GetUser {
     public static OkHttpHelper query(final OnQuery onQuery){
-        return OkHttpHelper
+        return OkHttpHelper.create()
                 .post().desc("获取用户信息").url("http://bbs.52bqu.com/biz/userc/appGetUser")
                 .execute(new OkHttpHelper.OnResponse() {
                     @Override
