@@ -11,7 +11,7 @@
     }
 
     dependencies {
-        compile 'com.github.Ct7Liang:OkHttpModule:1.0.1'
+        compile 'com.github.Ct7Liang:OkHttpModule:1.0.2'
     }
 ```
 #### 2.初始化
