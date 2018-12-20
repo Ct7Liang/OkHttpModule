@@ -16,6 +16,8 @@ public class MyApp extends Application {
         OkHttpHelper.init(this);
         OkHttpHelper.setShowLogEnable(true);
         OkHttpHelper.setLogTag("okHttpHelper");
-        OkHttpHelper.setSessionName("cookie");
+        OkHttpHelper.setSessionAuto(true, "cookie");
+
+        OkHttpHelper.getSession();
     }
 }

@@ -32,6 +32,7 @@ public class OkHttpHelper {
     private static String cookieName = "cookie";
     private static String SHOW_TAG = "okHttpHelper";
     private static boolean isShowLog = true;
+    private static boolean isAuto = true;
     private static OkHttpClient okHttpClient;
     private static SharedPreferences sp;
 
@@ -65,11 +66,13 @@ public class OkHttpHelper {
     }
 
     /**
-     * 设置session在请求头里面的键名,默认为"cookie"
-     * @param sessionName String
+     * 设置是否自动管理session
+     * @param sessionKeyName session在header里面的键名,默认为"cookie"
+     * @param auto 是否自动管理,默认为true
      */
-    public static void setSessionName(String sessionName){
-        cookieName = sessionName;
+    public static void setSessionAuto(boolean auto, String sessionKeyName){
+        cookieName = sessionKeyName;
+        isAuto = auto;
     }
 
     //标记: 是否为POST方法
@@ -149,7 +152,8 @@ public class OkHttpHelper {
     }
 
     public OkHttpHelper execute(final OnResponse onResponse){
-        write(desc==null?"***************************************":"****************** " + desc + " ******************");
+
+        write(desc==null?"<<<--------------------------------------->>>":" (ノ#-_-)ノ---------------------------------------------> " + desc);
         this.onResponse = onResponse;
         Request request;
         if (isPost) {
@@ -189,6 +193,8 @@ public class OkHttpHelper {
                     String substring = headers.substring(0, headers.indexOf(';'));
                     write("获取到SessionID: " + substring);
                     sp.edit().putString("sessionId", substring).apply();
+                }else{
+                    write("未获取到SessionID: " + headers);
                 }
                 ResponseBody body = response.body();
                 if (body != null){
@@ -253,6 +259,14 @@ public class OkHttpHelper {
     }
 
     /**
+     * 获取session
+     * @return
+     */
+    public static String getSession(){
+        return sp.getString("sessionId", "");
+    }
+
+    /**
      * 获取请求头 参数配置
      */
     private Headers getHeaders(){
@@ -266,10 +280,12 @@ public class OkHttpHelper {
                 sb.append(headerBean.key).append(" = ").append(headerBean.value).append("\n");
             }
         }
-        String sessionId = sp.getString("sessionId", "");
-        if (!sessionId.equals("")){
-            builder.add(cookieName, sessionId);
-            sb.append(cookieName).append(" = ").append(sessionId);
+        if (isAuto){
+            String sessionId = getSession();
+            if (!sessionId.equals("")){
+                builder.add(cookieName, sessionId);
+                sb.append(cookieName).append(" = ").append(sessionId);
+            }
         }
         write("请求头参数: \n" + sb);
         return builder.build();

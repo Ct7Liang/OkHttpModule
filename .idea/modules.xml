@@ -4,8 +4,11 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/OkHttpModule.iml" filepath="$PROJECT_DIR$/OkHttpModule.iml" />
       <module fileurl="file://$PROJECT_DIR$/OkHttpModule.iml" filepath="$PROJECT_DIR$/OkHttpModule.iml" />
+      <module fileurl="file://$PROJECT_DIR$/OkHttpModule.iml" filepath="$PROJECT_DIR$/OkHttpModule.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/okhttphelper/okhttphelper.iml" filepath="$PROJECT_DIR$/okhttphelper/okhttphelper.iml" />
       <module fileurl="file://$PROJECT_DIR$/okhttphelper/okhttphelper.iml" filepath="$PROJECT_DIR$/okhttphelper/okhttphelper.iml" />
       <module fileurl="file://$PROJECT_DIR$/okhttphelper/okhttphelper.iml" filepath="$PROJECT_DIR$/okhttphelper/okhttphelper.iml" />
     </modules>
